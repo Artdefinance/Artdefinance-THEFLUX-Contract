@@ -1987,7 +1987,7 @@ contract ADFTHEFLUX is IERC721Receiver, AccessControl {
             _info_startPrice                        : _startPrice,
             _info_highestbidder                     : address(0),
             _info_highestbid                        : 0, 
-            _info_endTime                           : block.timestamp + 10 minutes,//block.timestamp + _auctionPeriod * 1 days,
+            _info_endTime                           : block.timestamp + _auctionPeriod * 1 days,
             _info_auctionStatus                     : auctionStatus.auctioning
         });
         
