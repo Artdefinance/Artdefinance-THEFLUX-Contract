@@ -1964,6 +1964,7 @@ contract ADFTHEFLUX is IERC721Receiver, AccessControl {
         _;
     }
     modifier isAuctionCancel(uint256 _auctionid) {
+        require ( _auctionidList[_auctionIndex[_auctionid]]._info_auctionStatus == auctionStatus.auctioning , "auctionId is not auctioning");
         require ( _auctionidList[_auctionIndex[_auctionid]]._info_seller  == msg.sender , "MSG.SENDER is not NFT Seller.");
         require ( _auctionidList[_auctionIndex[_auctionid]]._info_highestbidder == address(0) , "Aleady biding");
         _;
@@ -2097,8 +2098,6 @@ contract ADFTHEFLUX is IERC721Receiver, AccessControl {
     Counters.Counter private _saleIds;
     Counters.Counter private _currentSaleCount;
 
-    mapping (uint256 => uint256) private _fixedPriceStatus;
-
     enum saleStatus { Non , saling , saled , salecancel} 
 
     struct marketListing_info {
@@ -2133,6 +2132,7 @@ contract ADFTHEFLUX is IERC721Receiver, AccessControl {
     }
 
     modifier onlySeller (uint256 _saleId) {
+        require ( _saleidList[_saleIndex[_saleId]]._info_salestatus == saleStatus.saling , "saleId status is not saling");
         require ( _saleidList[_saleIndex[_saleId]]._info_seller == msg.sender  , "MSG.SENDER is not NFT Seller.");
         _;
     }
@@ -2172,13 +2172,11 @@ contract ADFTHEFLUX is IERC721Receiver, AccessControl {
         info._info_salestatus = saleStatus.saled;
 
         IERC721(info._info_nftAddress).safeTransferFrom(address(this), msg.sender, info._info_tokenid);
-
-        if ( _price > info._info_price) {
-            _price = _price - info._info_price;
-        }
         
-        _token.transferFrom(msg.sender , info._info_seller , _price);
+        _token.transferFrom(msg.sender , info._info_seller , info._info_price);
+        
         _currentSaleCount.decrement();
+        
         emit fixedsaleBuyEvent(_saleId , info._info_seller , msg.sender , _price);
 
     }
