@@ -1944,9 +1944,10 @@ contract ADFTHEFLUX is IERC721Receiver, AccessControl {
 
     modifier isAuctionBid (uint256 _auctionId , uint256 _bidPrice) {
         require(_auctionidList[_auctionIndex[_auctionId]]._info_highestbidder != msg.sender , "msg.sender has already bid at the highest price");
-        require(_token.balanceOf(msg.sender) > _bidPrice , "msg.sender balance is less than bidPrice");
+        require(_token.balanceOf(msg.sender) >= _bidPrice , "msg.sender balance is less than bidPrice");
         require(_auctionidList[_auctionIndex[_auctionId]]._info_auctionStatus == auctionStatus.auctioning , "Auction is not started");
         require(_auctionidList[_auctionIndex[_auctionId]]._info_seller != msg.sender , "the seller cannot participate in the auction");
+        require(_auctionidList[_auctionIndex[_auctionId]]._info_auctionId == _auctionId , "auctionId fail");
 
         if (_auctionidList[_auctionIndex[_auctionId]]._info_highestbidder == address(0)) {
             require (_auctionidList[_auctionIndex[_auctionId]]._info_startPrice < _bidPrice , "bidPrice must be greater than startprice");
@@ -1959,11 +1960,13 @@ contract ADFTHEFLUX is IERC721Receiver, AccessControl {
 
     modifier isAuctionEnd(uint256 _auctionid) {
         require(hasRole(ADF_ADMIN_ROLE, msg.sender) || hasRole(AUCTIONEND_ROLE , msg.sender) , "msg.sender is missing role");
+        require(_auctionidList[_auctionIndex[_auctionid]]._info_auctionId == _auctionid , "auctionId fail");
         require(_auctionidList[_auctionIndex[_auctionid]]._info_auctionStatus == auctionStatus.auctioning, "Action not started");  
         require(_auctionidList[_auctionIndex[_auctionid]]._info_endTime <= block.timestamp , "Auction is still ongoing");
         _;
     }
     modifier isAuctionCancel(uint256 _auctionid) {
+        require ( _auctionidList[_auctionIndex[_auctionid]]._info_auctionId == _auctionid , "auctionId fail");
         require ( _auctionidList[_auctionIndex[_auctionid]]._info_auctionStatus == auctionStatus.auctioning , "auctionId is not auctioning");
         require ( _auctionidList[_auctionIndex[_auctionid]]._info_seller  == msg.sender , "MSG.SENDER is not NFT Seller.");
         require ( _auctionidList[_auctionIndex[_auctionid]]._info_highestbidder == address(0) , "Aleady biding");
@@ -2124,14 +2127,17 @@ contract ADFTHEFLUX is IERC721Receiver, AccessControl {
         _;
     }
 
-    modifier isFixedSaleBuy (uint256 _saleId , uint256 _price/* , uint256 _stableType*/) {
-        require(_token.balanceOf(msg.sender) > _price , "msg.sender balance is less than bidPrice");
-        require(_saleidList[_saleIndex[_saleId]]._info_price <= _price , "the price entered must be the same as the salling price");
+    modifier isFixedSaleBuy (uint256 _saleId , uint256 _price) {
+        require ( _saleidList[_saleIndex[_saleId]]._info_saleId == _saleId , "saleId fail"); 
+        require(_token.balanceOf(msg.sender) >= _price , "msg.sender balance is less than Price");
+        require(_saleidList[_saleIndex[_saleId]]._info_saleId == _saleId , "saleId fail"); 
+        require(_saleidList[_saleIndex[_saleId]]._info_price <= _price , "the price entered must be equal to or greater than the salling price");
         require(_saleidList[_saleIndex[_saleId]]._info_salestatus == saleStatus.saling , "saleId status is not saling");
         _;
     }
 
     modifier onlySeller (uint256 _saleId) {
+        require ( _saleidList[_saleIndex[_saleId]]._info_saleId == _saleId , "saleId fail"); 
         require ( _saleidList[_saleIndex[_saleId]]._info_salestatus == saleStatus.saling , "saleId status is not saling");
         require ( _saleidList[_saleIndex[_saleId]]._info_seller == msg.sender  , "MSG.SENDER is not NFT Seller.");
         _;
@@ -2229,6 +2235,7 @@ contract ADFTHEFLUX is IERC721Receiver, AccessControl {
     function isEnder(address _ender) public view returns (bool) {
         return hasRole(AUCTIONEND_ROLE, _ender);
     }
+
 
     function onERC721Received(address , address , uint256 , bytes calldata ) public virtual override returns (bytes4) {
 	
